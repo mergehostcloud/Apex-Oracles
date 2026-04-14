@@ -1,0 +1,1408 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>APEX ORACLE — AI Trading Intelligence</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Share+Tech+Mono&family=Rajdhani:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --gold: #D4AF37;
+  --gold2: #F0D060;
+  --gold-dim: #8A6F1A;
+  --bg: #020608;
+  --bg2: #060D10;
+  --bg3: #0A1520;
+  --panel: #0D1E2A;
+  --panel2: #0F2535;
+  --border: rgba(212,175,55,0.18);
+  --border2: rgba(212,175,55,0.35);
+  --text: #E8F4F8;
+  --text2: #7A9BAE;
+  --text3: #3D5A6A;
+  --green: #00E5A0;
+  --green-bg: rgba(0,229,160,0.08);
+  --red: #FF4560;
+  --red-bg: rgba(255,69,96,0.08);
+  --blue: #00C4FF;
+  --blue-bg: rgba(0,196,255,0.08);
+  --amber: #FFB800;
+  --amber-bg: rgba(255,184,0,0.08);
+  --r: 6px;
+  --r2: 10px;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+html{scroll-behavior:smooth;}
+body{
+  background:var(--bg);
+  color:var(--text);
+  font-family:'Rajdhani',sans-serif;
+  font-size:15px;
+  min-height:100vh;
+  overflow-x:hidden;
+}
+
+/* SCAN LINES OVERLAY */
+body::before{
+  content:'';
+  position:fixed;
+  inset:0;
+  background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,0.04) 2px,rgba(0,0,0,0.04) 4px);
+  pointer-events:none;
+  z-index:9999;
+}
+
+/* HEADER */
+.header{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  padding:0 2rem;
+  height:64px;
+  border-bottom:1px solid var(--border);
+  background:rgba(2,6,8,0.95);
+  position:sticky;
+  top:0;
+  z-index:100;
+  backdrop-filter:blur(12px);
+}
+.logo{
+  display:flex;
+  align-items:center;
+  gap:12px;
+}
+.logo-icon{
+  width:38px;height:38px;
+  border:1.5px solid var(--gold);
+  border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+  position:relative;
+}
+.logo-icon::before{
+  content:'';
+  position:absolute;
+  inset:3px;
+  border-radius:50%;
+  border:1px solid rgba(212,175,55,0.3);
+  animation:spin 8s linear infinite;
+}
+.logo-icon svg{position:relative;z-index:1;}
+@keyframes spin{to{transform:rotate(360deg);}}
+.logo-text{
+  font-family:'Orbitron',sans-serif;
+  font-size:17px;
+  font-weight:900;
+  letter-spacing:3px;
+  color:var(--gold);
+  text-shadow:0 0 20px rgba(212,175,55,0.4);
+}
+.logo-sub{
+  font-size:9px;
+  letter-spacing:4px;
+  color:var(--text3);
+  font-family:'Share Tech Mono',monospace;
+  margin-top:2px;
+}
+.header-right{
+  display:flex;
+  align-items:center;
+  gap:20px;
+}
+.live-badge{
+  display:flex;align-items:center;gap:6px;
+  font-size:11px;letter-spacing:2px;
+  color:var(--green);
+  font-family:'Share Tech Mono',monospace;
+}
+.live-dot{
+  width:7px;height:7px;border-radius:50%;
+  background:var(--green);
+  animation:pulse 1.5s ease-in-out infinite;
+}
+@keyframes pulse{0%,100%{opacity:1;box-shadow:0 0 0 0 rgba(0,229,160,0.4);}50%{opacity:0.7;box-shadow:0 0 0 5px rgba(0,229,160,0);}}
+.header-clock{
+  font-family:'Share Tech Mono',monospace;
+  font-size:12px;
+  color:var(--text2);
+  letter-spacing:1px;
+}
+
+/* NAV TABS */
+.nav{
+  display:flex;
+  gap:0;
+  padding:0 2rem;
+  border-bottom:1px solid var(--border);
+  background:var(--bg2);
+  overflow-x:auto;
+}
+.nav-tab{
+  padding:14px 22px;
+  font-size:12px;
+  letter-spacing:2px;
+  font-weight:600;
+  color:var(--text3);
+  cursor:pointer;
+  border-bottom:2px solid transparent;
+  white-space:nowrap;
+  transition:all 0.2s;
+  font-family:'Orbitron',sans-serif;
+}
+.nav-tab:hover{color:var(--text2);}
+.nav-tab.active{color:var(--gold);border-bottom-color:var(--gold);}
+
+/* MAIN */
+.main{padding:1.5rem 2rem 3rem;max-width:1400px;margin:0 auto;}
+.panel-section{display:none;}
+.panel-section.active{display:block;}
+
+/* GRID SYSTEMS */
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+.g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;}
+.g4{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;}
+.g5{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:12px;}
+@media(max-width:768px){.g2,.g3,.g4,.g5{grid-template-columns:1fr 1fr;}}
+
+/* CARDS */
+.card{
+  background:var(--panel);
+  border:1px solid var(--border);
+  border-radius:var(--r2);
+  padding:1.25rem;
+  margin-bottom:16px;
+}
+.card-title{
+  font-family:'Orbitron',sans-serif;
+  font-size:11px;
+  letter-spacing:3px;
+  color:var(--gold);
+  margin-bottom:14px;
+  display:flex;align-items:center;gap:8px;
+}
+.card-title::after{
+  content:'';flex:1;
+  height:1px;
+  background:linear-gradient(90deg,var(--gold-dim),transparent);
+}
+
+/* METRIC CARDS */
+.mcard{
+  background:var(--bg3);
+  border:1px solid var(--border);
+  border-radius:var(--r);
+  padding:1rem;
+}
+.mcard-label{
+  font-size:10px;letter-spacing:2px;
+  color:var(--text3);
+  font-family:'Share Tech Mono',monospace;
+  margin-bottom:6px;
+}
+.mcard-val{
+  font-family:'Orbitron',sans-serif;
+  font-size:20px;
+  font-weight:700;
+  color:var(--text);
+}
+.mcard-val.green{color:var(--green);}
+.mcard-val.red{color:var(--red);}
+.mcard-val.gold{color:var(--gold);}
+.mcard-val.blue{color:var(--blue);}
+.mcard-sub{font-size:11px;color:var(--text3);margin-top:4px;}
+
+/* FORM ELEMENTS */
+label.lbl{
+  display:block;
+  font-size:10px;letter-spacing:2px;
+  color:var(--text3);
+  margin-bottom:6px;margin-top:14px;
+  font-family:'Share Tech Mono',monospace;
+}
+select,input[type=number],input[type=text]{
+  width:100%;
+  background:var(--bg3);
+  border:1px solid var(--border);
+  border-radius:var(--r);
+  color:var(--text);
+  padding:9px 12px;
+  font-size:13px;
+  font-family:'Rajdhani',sans-serif;
+  outline:none;
+  transition:border 0.2s;
+}
+select:focus,input:focus{border-color:var(--gold-dim);}
+select option{background:var(--bg3);}
+input[type=range]{
+  width:100%;accent-color:var(--gold);
+  background:transparent;cursor:pointer;
+}
+.range-row{display:flex;align-items:center;gap:10px;}
+.range-val{
+  font-family:'Orbitron',sans-serif;
+  font-size:13px;font-weight:700;
+  color:var(--gold);min-width:46px;text-align:right;
+}
+
+/* CHECKBOX */
+.chk-row{display:flex;align-items:center;gap:8px;padding:5px 0;font-size:13px;color:var(--text2);cursor:pointer;}
+input[type=checkbox]{
+  width:15px;height:15px;
+  accent-color:var(--gold);cursor:pointer;
+}
+
+/* BUTTONS */
+.btn{
+  padding:12px 20px;
+  font-family:'Orbitron',sans-serif;
+  font-size:11px;
+  letter-spacing:2px;
+  font-weight:700;
+  border-radius:var(--r);
+  cursor:pointer;
+  transition:all 0.2s;
+  border:none;
+  width:100%;
+  margin-top:14px;
+}
+.btn-gold{
+  background:linear-gradient(135deg,#B8960A,#D4AF37,#B8960A);
+  color:#020608;
+}
+.btn-gold:hover{filter:brightness(1.15);}
+.btn-gold:disabled{opacity:0.4;cursor:not-allowed;filter:none;}
+.btn-outline{
+  background:transparent;
+  color:var(--gold);
+  border:1px solid var(--border2);
+}
+.btn-outline:hover{background:rgba(212,175,55,0.08);}
+
+/* BADGE */
+.badge{
+  display:inline-block;
+  font-size:10px;letter-spacing:1.5px;font-weight:600;
+  padding:3px 10px;border-radius:3px;
+  font-family:'Share Tech Mono',monospace;
+}
+.badge-green{background:var(--green-bg);color:var(--green);border:1px solid rgba(0,229,160,0.2);}
+.badge-red{background:var(--red-bg);color:var(--red);border:1px solid rgba(255,69,96,0.2);}
+.badge-gold{background:rgba(212,175,55,0.1);color:var(--gold);border:1px solid var(--border);}
+.badge-blue{background:var(--blue-bg);color:var(--blue);border:1px solid rgba(0,196,255,0.2);}
+.badge-amber{background:var(--amber-bg);color:var(--amber);border:1px solid rgba(255,184,0,0.2);}
+
+/* SIGNAL VERDICT */
+.verdict-box{
+  border-radius:var(--r2);
+  padding:1.5rem;
+  margin-bottom:16px;
+  border:1px solid;
+  position:relative;
+  overflow:hidden;
+}
+.verdict-box::before{
+  content:'';
+  position:absolute;
+  inset:0;
+  opacity:0.04;
+  background:radial-gradient(circle at 30% 50%,currentColor,transparent 60%);
+}
+.verdict-box.buy{border-color:rgba(0,229,160,0.4);color:var(--green);}
+.verdict-box.sell{border-color:rgba(255,69,96,0.4);color:var(--red);}
+.verdict-box.wait{border-color:rgba(255,184,0,0.4);color:var(--amber);}
+.verdict-top{display:flex;align-items:center;gap:14px;margin-bottom:12px;}
+.verdict-icon{
+  width:50px;height:50px;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+  font-family:'Orbitron',sans-serif;
+  font-size:18px;font-weight:900;
+  flex-shrink:0;
+  border:2px solid currentColor;
+}
+.verdict-title{
+  font-family:'Orbitron',sans-serif;
+  font-size:20px;font-weight:900;
+  letter-spacing:2px;
+}
+.verdict-sub{font-size:13px;color:var(--text2);margin-top:3px;letter-spacing:1px;}
+.verdict-body{font-size:14px;color:var(--text2);line-height:1.7;}
+
+/* SCORE BAR */
+.score-wrap{margin:12px 0;}
+.score-label{display:flex;justify-content:space-between;font-size:11px;color:var(--text3);margin-bottom:5px;font-family:'Share Tech Mono',monospace;}
+.score-track{height:4px;background:rgba(255,255,255,0.06);border-radius:2px;overflow:hidden;}
+.score-fill{height:100%;border-radius:2px;transition:width 0.8s cubic-bezier(.4,0,.2,1);}
+
+/* TABLE ROWS */
+.trow{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:10px 0;
+  border-bottom:1px solid rgba(255,255,255,0.04);
+  font-size:13px;
+}
+.trow:last-child{border-bottom:none;}
+.trow-label{color:var(--text2);}
+
+/* UPLOAD ZONE */
+.upload-zone{
+  border:1.5px dashed var(--border2);
+  border-radius:var(--r2);
+  padding:2.5rem;
+  text-align:center;
+  cursor:pointer;
+  margin-bottom:16px;
+  transition:all 0.2s;
+  background:var(--bg3);
+}
+.upload-zone:hover{border-color:var(--gold);background:rgba(212,175,55,0.04);}
+.upload-zone-text{font-size:13px;color:var(--text3);margin-top:10px;letter-spacing:1px;}
+.img-preview{width:100%;border-radius:var(--r2);border:1px solid var(--border);margin-bottom:16px;display:none;max-height:400px;object-fit:contain;}
+
+/* LOADING */
+.ai-loading{text-align:center;padding:2.5rem;display:none;}
+.hexagon-loader{
+  width:60px;height:60px;margin:0 auto 16px;
+  border:2px solid var(--gold-dim);
+  border-top-color:var(--gold);
+  border-radius:50%;
+  animation:spin 1s linear infinite;
+}
+.loading-text{
+  font-family:'Share Tech Mono',monospace;
+  font-size:12px;letter-spacing:2px;
+  color:var(--gold);
+  animation:blink 1s ease-in-out infinite;
+}
+@keyframes blink{0%,100%{opacity:1;}50%{opacity:0.3;}}
+
+/* GAUGE */
+.gauge-wrap{text-align:center;padding:0.5rem 0;}
+.gauge-svg{overflow:visible;}
+
+/* MINI CANDLE CHART */
+.mini-chart{
+  display:flex;align-items:flex-end;gap:2px;
+  height:60px;padding:4px 0;
+}
+.candle{
+  flex:1;border-radius:1px;min-width:4px;
+  transition:height 0.4s ease;
+}
+.candle.bull{background:var(--green);}
+.candle.bear{background:var(--red);}
+
+/* TRADE JOURNAL */
+.trade-item{
+  display:grid;
+  grid-template-columns:auto 1fr auto auto;
+  align-items:center;gap:12px;
+  padding:12px 0;
+  border-bottom:1px solid rgba(255,255,255,0.04);
+  font-size:13px;
+}
+.trade-item:last-child{border-bottom:none;}
+.trade-dot{width:8px;height:8px;border-radius:50%;}
+.trade-dot.buy{background:var(--green);}
+.trade-dot.sell{background:var(--red);}
+
+/* HEATMAP CELLS */
+.heat-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:3px;margin-top:8px;}
+.heat-cell{
+  aspect-ratio:1;border-radius:2px;
+  display:flex;align-items:center;justify-content:center;
+  font-size:9px;font-family:'Share Tech Mono',monospace;
+  color:var(--bg);font-weight:700;
+}
+
+/* SCROLLBAR */
+::-webkit-scrollbar{width:4px;height:4px;}
+::-webkit-scrollbar-track{background:var(--bg2);}
+::-webkit-scrollbar-thumb{background:var(--gold-dim);border-radius:2px;}
+
+/* ANIMATIONS */
+@keyframes fadeUp{from{opacity:0;transform:translateY(16px);}to{opacity:1;transform:translateY(0);}}
+.fade-up{animation:fadeUp 0.4s ease forwards;}
+
+/* ANALYSIS OUTPUT */
+.analysis-text{
+  font-family:'Rajdhani',sans-serif;
+  font-size:14px;line-height:1.8;
+  color:var(--text2);
+  white-space:pre-wrap;
+}
+
+/* INDICATOR BARS */
+.ind-row{margin:8px 0;}
+.ind-top{display:flex;justify-content:space-between;font-size:11px;margin-bottom:4px;}
+.ind-name{color:var(--text3);letter-spacing:1px;font-family:'Share Tech Mono',monospace;}
+.ind-track{height:3px;background:rgba(255,255,255,0.06);border-radius:2px;overflow:hidden;}
+.ind-fill{height:100%;border-radius:2px;}
+
+/* MULTI-TF TABLE */
+.mtf-table{width:100%;border-collapse:collapse;font-size:12px;}
+.mtf-table th{
+  font-family:'Share Tech Mono',monospace;
+  font-size:9px;letter-spacing:2px;
+  color:var(--text3);
+  padding:8px 10px;
+  border-bottom:1px solid var(--border);
+  text-align:left;
+}
+.mtf-table td{padding:9px 10px;border-bottom:1px solid rgba(255,255,255,0.03);color:var(--text2);}
+.mtf-table tr:last-child td{border-bottom:none;}
+
+/* SESSION CLOCK */
+.session-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;}
+.sess-card{
+  background:var(--bg3);border:1px solid var(--border);
+  border-radius:var(--r);padding:.85rem;text-align:center;
+}
+.sess-name{font-family:'Orbitron',sans-serif;font-size:10px;letter-spacing:2px;color:var(--text3);margin-bottom:6px;}
+.sess-time{font-family:'Share Tech Mono',monospace;font-size:14px;color:var(--text);}
+.sess-status{font-size:10px;letter-spacing:1px;margin-top:4px;}
+.sess-card.active-sess{border-color:rgba(0,229,160,0.3);background:rgba(0,229,160,0.04);}
+.sess-card.active-sess .sess-name{color:var(--green);}
+</style>
+</head>
+<body>
+
+<header class="header">
+  <div class="logo">
+    <div class="logo-icon">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+        <polygon points="12,2 22,8.5 22,15.5 12,22 2,15.5 2,8.5" stroke="#D4AF37" stroke-width="1.5" fill="none"/>
+        <polygon points="12,6 18,9.5 18,14.5 12,18 6,14.5 6,9.5" stroke="#D4AF37" stroke-width="1" fill="rgba(212,175,55,0.1)"/>
+        <circle cx="12" cy="12" r="2" fill="#D4AF37"/>
+      </svg>
+    </div>
+    <div>
+      <div class="logo-text">APEX ORACLE</div>
+      <div class="logo-sub">AI TRADING INTELLIGENCE</div>
+    </div>
+  </div>
+  <div class="header-right">
+    <div class="live-badge"><div class="live-dot"></div>LIVE ENGINE</div>
+    <div class="header-clock" id="headerClock">--:--:-- UTC</div>
+  </div>
+</header>
+
+<nav class="nav">
+  <div class="nav-tab active" onclick="switchPanel('oracle')">ORACLE SIGNAL</div>
+  <div class="nav-tab" onclick="switchPanel('scanner')">CONFLUENCE</div>
+  <div class="nav-tab" onclick="switchPanel('multi')">MULTI-TIMEFRAME</div>
+  <div class="nav-tab" onclick="switchPanel('calc')">POSITION CALC</div>
+  <div class="nav-tab" onclick="switchPanel('sessions')">SESSIONS</div>
+  <div class="nav-tab" onclick="switchPanel('journal')">JOURNAL</div>
+  <div class="nav-tab" onclick="switchPanel('academy')">EDGE RULES</div>
+</nav>
+
+<div class="main">
+
+<!-- ====== ORACLE SIGNAL PANEL ====== -->
+<div id="panel-oracle" class="panel-section active">
+  <div class="g2" style="align-items:start;">
+    <div>
+      <div class="card">
+        <div class="card-title">CHART UPLOAD & INSTRUMENT</div>
+        <div class="upload-zone" onclick="document.getElementById('chartUpload').click()" id="dropZone">
+          <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#3D5A6A" stroke-width="1.5" style="display:block;margin:0 auto;">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/>
+          </svg>
+          <div class="upload-zone-text" id="uploadLabel">UPLOAD CHART IMAGE (PNG / JPG)</div>
+          <div style="font-size:11px;color:var(--text3);margin-top:6px;letter-spacing:1px;">TradingView · MT4 · MT5 · cTrader</div>
+        </div>
+        <input type="file" id="chartUpload" accept="image/*" style="display:none" onchange="handleChart(event)">
+        <img id="chartPreview" class="img-preview">
+
+        <div class="g2">
+          <div>
+            <label class="lbl">INSTRUMENT</label>
+            <select id="o-pair">
+              <option>XAU/USD (Gold)</option><option>XAG/USD (Silver)</option>
+              <option>EUR/USD</option><option>GBP/USD</option><option>USD/JPY</option>
+              <option>GBP/JPY</option><option>AUD/USD</option><option>NZD/USD</option>
+              <option>USD/CAD</option><option>EUR/GBP</option><option>USD/CHF</option>
+              <option>NAS100</option><option>US30 (DJIA)</option><option>US500 (SPX)</option>
+              <option>BTC/USD</option><option>ETH/USD</option>
+            </select>
+          </div>
+          <div>
+            <label class="lbl">TIMEFRAME</label>
+            <select id="o-tf">
+              <option>M5</option><option>M15</option><option>M30</option>
+              <option selected>H1</option><option>H4</option><option>D1</option><option>W1</option>
+            </select>
+          </div>
+        </div>
+        <div class="g2">
+          <div>
+            <label class="lbl">ACCOUNT BALANCE (USD)</label>
+            <input type="number" id="o-bal" value="1000" min="100">
+          </div>
+          <div>
+            <label class="lbl">RISK PER TRADE</label>
+            <div class="range-row" style="margin-top:8px;">
+              <input type="range" min="0.5" max="5" step="0.5" value="1" id="o-risk" oninput="document.getElementById('o-risk-lbl').textContent=parseFloat(this.value).toFixed(1)+'%'">
+              <span class="range-val" id="o-risk-lbl">1.0%</span>
+            </div>
+          </div>
+        </div>
+        <div>
+          <label class="lbl">TRADING STRATEGY</label>
+          <select id="o-strat">
+            <option>Smart Money Concepts (SMC)</option>
+            <option>ICT Inner Circle Trader</option>
+            <option>Price Action + S/R</option>
+            <option>Wyckoff Method</option>
+            <option>Supply & Demand Zones</option>
+            <option>Elliott Wave + Fibonacci</option>
+            <option>Multi-timeframe Confluence</option>
+          </select>
+        </div>
+        <div>
+          <label class="lbl">ANALYSIS DEPTH</label>
+          <select id="o-depth">
+            <option>Standard (entry + SL + TP)</option>
+            <option selected>Advanced (full SMC breakdown)</option>
+            <option>Ultra (institutional flow + COT analysis)</option>
+          </select>
+        </div>
+        <button class="btn btn-gold" id="oracleBtn" onclick="runOracleAnalysis()" disabled>
+          ACTIVATE ORACLE ANALYSIS
+        </button>
+      </div>
+    </div>
+
+    <div>
+      <div id="oracleLoading" class="ai-loading card">
+        <div class="hexagon-loader"></div>
+        <div class="loading-text" id="loadingMsg">INITIALIZING AI ENGINE...</div>
+        <div style="font-size:11px;color:var(--text3);margin-top:8px;letter-spacing:1px;" id="loadingStep">Processing chart data</div>
+      </div>
+
+      <div id="oracleOutput" style="display:none;">
+        <div id="verdictEl"></div>
+        <div id="metricsEl"></div>
+        <div id="indicatorsEl"></div>
+        <div id="breakdownEl"></div>
+        <div id="narrativeEl"></div>
+      </div>
+
+      <div id="oraclePlaceholder" class="card" style="text-align:center;padding:3rem;">
+        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" style="display:block;margin:0 auto 16px;opacity:0.2;">
+          <polygon points="12,2 22,8.5 22,15.5 12,22 2,15.5 2,8.5" stroke="#D4AF37" stroke-width="1.5" fill="none"/>
+          <circle cx="12" cy="12" r="3" fill="#D4AF37"/>
+        </svg>
+        <div style="font-family:'Orbitron',sans-serif;font-size:12px;letter-spacing:3px;color:var(--text3);">AWAITING CHART INPUT</div>
+        <div style="font-size:12px;color:var(--text3);margin-top:8px;line-height:1.7;">Upload a chart image and configure<br>your parameters to receive an AI signal</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ====== CONFLUENCE SCANNER ====== -->
+<div id="panel-scanner" class="panel-section">
+  <div class="g2" style="align-items:start;">
+    <div>
+      <div class="card">
+        <div class="card-title">MARKET CONDITIONS</div>
+        <div class="g2">
+          <div>
+            <label class="lbl">INSTRUMENT</label>
+            <select id="sc-pair">
+              <option>XAU/USD (Gold)</option><option>EUR/USD</option><option>GBP/USD</option>
+              <option>USD/JPY</option><option>GBP/JPY</option><option>NAS100</option>
+            </select>
+          </div>
+          <div>
+            <label class="lbl">SESSION</label>
+            <select id="sc-sess">
+              <option>London Open (07:00–10:00)</option>
+              <option>NY Open (13:00–16:00)</option>
+              <option>London/NY Overlap</option>
+              <option>Asian Session</option>
+              <option>Off-hours / Dead zone</option>
+            </select>
+          </div>
+        </div>
+        <div class="g2">
+          <div>
+            <label class="lbl">HTF TREND (H4/D1)</label>
+            <select id="sc-htf">
+              <option>Strongly Bullish</option><option>Bullish</option>
+              <option>Ranging / Consolidating</option>
+              <option>Bearish</option><option>Strongly Bearish</option>
+            </select>
+          </div>
+          <div>
+            <label class="lbl">TRADE DIRECTION</label>
+            <select id="sc-dir">
+              <option>Long (Buy)</option><option>Short (Sell)</option>
+            </select>
+          </div>
+        </div>
+        <div class="g2">
+          <div>
+            <label class="lbl">NEWS RISK</label>
+            <select id="sc-news">
+              <option>No news — clean</option><option>Low impact</option>
+              <option>Medium impact</option><option>High impact (NFP/CPI)</option><option>Central bank decision</option>
+            </select>
+          </div>
+          <div>
+            <label class="lbl">MARKET STRUCTURE</label>
+            <select id="sc-ms">
+              <option>BOS Confirmed (Break of Structure)</option>
+              <option>CHOCH (Change of Character)</option>
+              <option>Inducement sweep</option>
+              <option>Ranging / No clear structure</option>
+            </select>
+          </div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title">CONFLUENCES CHECKLIST</div>
+        <div class="g2">
+          <div>
+            <div class="chk-row"><input type="checkbox" id="cf1" checked><label>Key S/R level</label></div>
+            <div class="chk-row"><input type="checkbox" id="cf2" checked><label>Order block (OB)</label></div>
+            <div class="chk-row"><input type="checkbox" id="cf3"><label>Fair Value Gap (FVG)</label></div>
+            <div class="chk-row"><input type="checkbox" id="cf4"><label>Fibonacci 61.8–78.6%</label></div>
+            <div class="chk-row"><input type="checkbox" id="cf5"><label>Liquidity sweep / stop hunt</label></div>
+            <div class="chk-row"><input type="checkbox" id="cf6"><label>EMA 20/50/200 stack</label></div>
+          </div>
+          <div>
+            <div class="chk-row"><input type="checkbox" id="cf7"><label>BOS on LTF confirmed</label></div>
+            <div class="chk-row"><input type="checkbox" id="cf8" checked><label>Clean price structure</label></div>
+            <div class="chk-row"><input type="checkbox" id="cf9"><label>Rejection wick / engulf</label></div>
+            <div class="chk-row"><input type="checkbox" id="cf10"><label>Session kill zone</label></div>
+            <div class="chk-row"><input type="checkbox" id="cf11"><label>Premium / discount zone</label></div>
+            <div class="chk-row"><input type="checkbox" id="cf12"><label>High volume node</label></div>
+          </div>
+        </div>
+        <button class="btn btn-gold" onclick="runScanner()">RUN CONFLUENCE SCAN</button>
+      </div>
+    </div>
+    <div id="scanOutput">
+      <div class="card" style="text-align:center;padding:3rem;">
+        <div style="font-family:'Orbitron',sans-serif;font-size:12px;letter-spacing:3px;color:var(--text3);">CONFLUENCE SCORE</div>
+        <div style="font-size:80px;font-family:'Orbitron',sans-serif;font-weight:900;color:var(--text3);margin:1rem 0;">—</div>
+        <div style="font-size:12px;color:var(--text3);">Fill in conditions and run scan</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ====== MULTI-TIMEFRAME ====== -->
+<div id="panel-multi" class="panel-section">
+  <div class="card">
+    <div class="card-title">MULTI-TIMEFRAME ALIGNMENT MATRIX</div>
+    <div class="g2" style="margin-bottom:16px;">
+      <div>
+        <label class="lbl">INSTRUMENT</label>
+        <select id="mtf-pair">
+          <option>XAU/USD (Gold)</option><option>EUR/USD</option><option>GBP/USD</option><option>USD/JPY</option><option>NAS100</option>
+        </select>
+      </div>
+      <div>
+        <label class="lbl">BIAS</label>
+        <select id="mtf-bias">
+          <option>Overall Bullish</option><option>Overall Bearish</option><option>Mixed / Uncertain</option>
+        </select>
+      </div>
+    </div>
+    <div id="mtfInputs">
+      <table class="mtf-table">
+        <thead><tr>
+          <th>TIMEFRAME</th><th>TREND</th><th>STRUCTURE</th><th>KEY LEVEL</th><th>SIGNAL</th>
+        </tr></thead>
+        <tbody id="mtfBody"></tbody>
+      </table>
+    </div>
+    <button class="btn btn-gold" style="margin-top:14px;" onclick="runMTF()">ANALYZE ALIGNMENT</button>
+  </div>
+  <div id="mtfOutput"></div>
+</div>
+
+<!-- ====== POSITION CALC ====== -->
+<div id="panel-calc" class="panel-section">
+  <div class="g2" style="align-items:start;">
+    <div class="card">
+      <div class="card-title">POSITION SIZE ENGINE</div>
+      <div class="g2">
+        <div>
+          <label class="lbl">ACCOUNT BALANCE ($)</label>
+          <input type="number" id="pc-bal" value="1000" oninput="runCalc()">
+        </div>
+        <div>
+          <label class="lbl">RISK (%)</label>
+          <input type="number" id="pc-rsk" value="1" step="0.1" min="0.1" max="10" oninput="runCalc()">
+        </div>
+      </div>
+      <div class="g2">
+        <div>
+          <label class="lbl">ENTRY PRICE</label>
+          <input type="number" id="pc-ent" value="2320.00" step="0.01" oninput="runCalc()">
+        </div>
+        <div>
+          <label class="lbl">STOP LOSS</label>
+          <input type="number" id="pc-sl" value="2308.00" step="0.01" oninput="runCalc()">
+        </div>
+      </div>
+      <div class="g2">
+        <div>
+          <label class="lbl">TAKE PROFIT 1</label>
+          <input type="number" id="pc-tp1" value="2344.00" step="0.01" oninput="runCalc()">
+        </div>
+        <div>
+          <label class="lbl">TAKE PROFIT 2</label>
+          <input type="number" id="pc-tp2" value="2368.00" step="0.01" oninput="runCalc()">
+        </div>
+      </div>
+      <div>
+        <label class="lbl">INSTRUMENT TYPE</label>
+        <select id="pc-inst" onchange="runCalc()">
+          <option value="10,0.01">XAU/USD Gold — $10/pip (0.01 lot)</option>
+          <option value="10,0.01">Forex majors — $10/pip (0.01 lot)</option>
+          <option value="1,0.1">NAS100 — $1/pt (0.1 lot)</option>
+          <option value="1,0.1">US30 — $1/pt (0.1 lot)</option>
+        </select>
+      </div>
+      <div style="margin-top:14px;">
+        <label class="lbl">PARTIAL CLOSE STRATEGY</label>
+        <select id="pc-partial">
+          <option>Full close at TP1</option>
+          <option>50% at TP1, 50% at TP2</option>
+          <option>33% at TP1, 67% at TP2</option>
+          <option>25% TP1, 25% TP2, 50% runner</option>
+        </select>
+      </div>
+    </div>
+    <div id="calcOutput"></div>
+  </div>
+</div>
+
+<!-- ====== SESSIONS ====== -->
+<div id="panel-sessions" class="panel-section">
+  <div class="card">
+    <div class="card-title">GLOBAL SESSION MONITOR</div>
+    <div class="session-grid" id="sessionCards"></div>
+  </div>
+  <div class="g2">
+    <div class="card">
+      <div class="card-title">SESSION VOLATILITY GUIDE</div>
+      <div class="trow"><span class="trow-label">Sydney Open</span><span style="font-size:12px;color:var(--text3);">21:00–06:00 UTC · Low vol · AUD/NZD pairs</span></div>
+      <div class="trow"><span class="trow-label">Tokyo / Asian</span><span style="font-size:12px;color:var(--text3);">00:00–09:00 UTC · Med vol · JPY pairs</span></div>
+      <div class="trow"><span class="trow-label">London Open</span><span style="font-size:12px;color:var(--text3);">07:00–10:00 UTC · HIGH vol · EUR/GBP/Gold</span></div>
+      <div class="trow"><span class="trow-label">NY Open</span><span style="font-size:12px;color:var(--text3);">13:00–16:00 UTC · HIGH vol · All majors</span></div>
+      <div class="trow"><span class="trow-label">Overlap Zone</span><span style="font-size:12px;color:var(--text3);">13:00–17:00 UTC · PEAK vol · Best entries</span></div>
+      <div class="trow"><span class="trow-label">NY Close / Asia</span><span style="font-size:12px;color:var(--text3);">20:00–23:00 UTC · Low vol · Avoid trading</span></div>
+    </div>
+    <div class="card">
+      <div class="card-title">KILL ZONES (ICT)</div>
+      <div class="trow"><span class="trow-label">Asia Kill Zone</span><span><span class="badge badge-blue">00:00–04:00 UTC</span></span></div>
+      <div class="trow"><span class="trow-label">London Kill Zone</span><span><span class="badge badge-gold">07:00–09:00 UTC</span></span></div>
+      <div class="trow"><span class="trow-label">NY AM Kill Zone</span><span><span class="badge badge-green">12:00–15:00 UTC</span></span></div>
+      <div class="trow"><span class="trow-label">NY PM Kill Zone</span><span><span class="badge badge-amber">17:00–20:00 UTC</span></span></div>
+      <div style="margin-top:14px;padding:12px;background:var(--bg3);border-radius:var(--r);border:1px solid var(--border);">
+        <div style="font-size:11px;letter-spacing:1px;color:var(--gold);margin-bottom:6px;font-family:'Share Tech Mono',monospace;">CURRENT UTC TIME</div>
+        <div style="font-family:'Orbitron',sans-serif;font-size:24px;font-weight:700;color:var(--text);" id="bigClock">--:--:--</div>
+        <div style="font-size:12px;color:var(--text3);margin-top:4px;" id="activeKZ">Calculating session...</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ====== JOURNAL ====== -->
+<div id="panel-journal" class="panel-section">
+  <div class="g2" style="align-items:start;">
+    <div class="card">
+      <div class="card-title">LOG TRADE</div>
+      <div class="g2">
+        <div>
+          <label class="lbl">INSTRUMENT</label>
+          <input type="text" id="jn-pair" value="XAU/USD">
+        </div>
+        <div>
+          <label class="lbl">DIRECTION</label>
+          <select id="jn-dir"><option>Buy</option><option>Sell</option></select>
+        </div>
+      </div>
+      <div class="g2">
+        <div><label class="lbl">ENTRY</label><input type="number" id="jn-entry" value="2320" step="0.01"></div>
+        <div><label class="lbl">EXIT</label><input type="number" id="jn-exit" value="2345" step="0.01"></div>
+      </div>
+      <div class="g2">
+        <div><label class="lbl">STOP LOSS</label><input type="number" id="jn-sl" value="2308" step="0.01"></div>
+        <div><label class="lbl">LOT SIZE</label><input type="number" id="jn-lots" value="0.10" step="0.01"></div>
+      </div>
+      <div class="g2">
+        <div><label class="lbl">P&L ($)</label><input type="number" id="jn-pnl" value="250"></div>
+        <div>
+          <label class="lbl">STRATEGY</label>
+          <select id="jn-strat">
+            <option>SMC</option><option>ICT</option><option>Price Action</option>
+            <option>Wyckoff</option><option>Supply/Demand</option><option>Scalp</option>
+          </select>
+        </div>
+      </div>
+      <div><label class="lbl">NOTES</label><input type="text" id="jn-notes" placeholder="What did you notice?"></div>
+      <button class="btn btn-gold" onclick="addTrade()">ADD TO JOURNAL</button>
+    </div>
+    <div>
+      <div class="g4" id="jnStats" style="margin-bottom:16px;"></div>
+      <div class="card">
+        <div class="card-title">TRADE HISTORY</div>
+        <div id="jnLog"><div style="text-align:center;padding:2rem;font-size:12px;color:var(--text3);letter-spacing:1px;">NO TRADES LOGGED YET</div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ====== EDGE RULES ====== -->
+<div id="panel-academy" class="panel-section">
+  <div class="card">
+    <div class="card-title">APEX ORACLE — WINNING EDGE RULES</div>
+    <div class="g2">
+      <div>
+        <div style="padding:14px 0;border-bottom:1px solid rgba(255,255,255,0.04);">
+          <div style="font-family:'Orbitron',sans-serif;font-size:11px;letter-spacing:2px;color:var(--gold);margin-bottom:6px;">RULE 01 — ONLY TRADE KILL ZONES</div>
+          <div style="font-size:13px;color:var(--text2);line-height:1.7;">London (07–09 UTC) and NY AM (12–15 UTC) sessions produce 80% of all profitable intraday moves. Never trade the dead zone (20:00–23:00 UTC).</div>
+        </div>
+        <div style="padding:14px 0;border-bottom:1px solid rgba(255,255,255,0.04);">
+          <div style="font-family:'Orbitron',sans-serif;font-size:11px;letter-spacing:2px;color:var(--gold);margin-bottom:6px;">RULE 02 — MINIMUM 3 CONFLUENCES</div>
+          <div style="font-size:13px;color:var(--text2);line-height:1.7;">Never enter a trade with fewer than 3 confirmed confluences. The more layers of confluence, the higher probability. 5+ confluences = institutional-grade setup.</div>
+        </div>
+        <div style="padding:14px 0;border-bottom:1px solid rgba(255,255,255,0.04);">
+          <div style="font-family:'Orbitron',sans-serif;font-size:11px;letter-spacing:2px;color:var(--gold);margin-bottom:6px;">RULE 03 — HTF DEFINES BIAS</div>
+          <div style="font-size:13px;color:var(--text2);line-height:1.7;">Always trade in the direction of the H4 and D1 trend. Use M15/H1 for entry refinement only. Counter-trend trades should be avoided until advanced.</div>
+        </div>
+        <div style="padding:14px 0;border-bottom:1px solid rgba(255,255,255,0.04);">
+          <div style="font-family:'Orbitron',sans-serif;font-size:11px;letter-spacing:2px;color:var(--gold);margin-bottom:6px;">RULE 04 — MINIMUM 1:2 R:R</div>
+          <div style="font-size:13px;color:var(--text2);line-height:1.7;">Never take a trade with less than 1:2 risk-to-reward. A 50% win rate at 1:2 R:R is profitable. Target 1:3 to 1:5 for premium setups.</div>
+        </div>
+        <div style="padding:14px 0;">
+          <div style="font-family:'Orbitron',sans-serif;font-size:11px;letter-spacing:2px;color:var(--gold);margin-bottom:6px;">RULE 05 — MAX 2% RISK PER TRADE</div>
+          <div style="font-size:13px;color:var(--text2);line-height:1.7;">Risk no more than 1–2% of account per trade. This protects your capital through losing streaks and allows compounding during winning runs.</div>
+        </div>
+      </div>
+      <div>
+        <div style="padding:14px 0;border-bottom:1px solid rgba(255,255,255,0.04);">
+          <div style="font-family:'Orbitron',sans-serif;font-size:11px;letter-spacing:2px;color:var(--gold);margin-bottom:6px;">RULE 06 — LIQUIDITY FIRST</div>
+          <div style="font-size:13px;color:var(--text2);line-height:1.7;">Smart money always hunts liquidity before making a move. Look for stop hunts above swing highs (sell-side) or below swing lows (buy-side) before entering.</div>
+        </div>
+        <div style="padding:14px 0;border-bottom:1px solid rgba(255,255,255,0.04);">
+          <div style="font-family:'Orbitron',sans-serif;font-size:11px;letter-spacing:2px;color:var(--gold);margin-bottom:6px;">RULE 07 — NO TRADING PRE-NEWS</div>
+          <div style="font-size:13px;color:var(--text2);line-height:1.7;">Close or avoid positions 15 minutes before any high-impact news (NFP, CPI, FOMC, rate decisions). News creates false signals and stops out valid setups.</div>
+        </div>
+        <div style="padding:14px 0;border-bottom:1px solid rgba(255,255,255,0.04);">
+          <div style="font-family:'Orbitron',sans-serif;font-size:11px;letter-spacing:2px;color:var(--gold);margin-bottom:6px;">RULE 08 — MOVE SL TO BREAKEVEN</div>
+          <div style="font-size:13px;color:var(--text2);line-height:1.7;">Once price reaches 1:1 R:R, move stop loss to breakeven. This eliminates risk while leaving profit potential open. Protect your capital first.</div>
+        </div>
+        <div style="padding:14px 0;border-bottom:1px solid rgba(255,255,255,0.04);">
+          <div style="font-family:'Orbitron',sans-serif;font-size:11px;letter-spacing:2px;color:var(--gold);margin-bottom:6px;">RULE 09 — MAX 3 TRADES/DAY</div>
+          <div style="font-size:13px;color:var(--text2);line-height:1.7;">Overtrading is the #1 account killer. Quality over quantity. If you've taken 2 losses, stop trading for the day. Protect your mental capital too.</div>
+        </div>
+        <div style="padding:14px 0;">
+          <div style="font-family:'Orbitron',sans-serif;font-size:11px;letter-spacing:2px;color:var(--gold);margin-bottom:6px;">RULE 10 — JOURNAL EVERY TRADE</div>
+          <div style="font-size:13px;color:var(--text2);line-height:1.7;">The traders who journal consistently outperform those who don't by a wide margin. Track entries, exits, confluences, emotions, and results. Your journal is your edge.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="card" style="background:rgba(212,175,55,0.04);border-color:var(--border2);">
+    <div style="text-align:center;padding:.5rem 0;">
+      <div style="font-family:'Orbitron',sans-serif;font-size:11px;letter-spacing:3px;color:var(--gold);margin-bottom:8px;">DISCLAIMER</div>
+      <div style="font-size:12px;color:var(--text3);line-height:1.8;max-width:700px;margin:0 auto;">APEX ORACLE provides AI-assisted technical analysis for educational purposes. No trading tool guarantees profits. Forex, commodities, and CFD trading carries significant risk of loss. Always use proper risk management. Past performance does not guarantee future results. Trade responsibly.</div>
+    </div>
+  </div>
+</div>
+
+</div><!-- /main -->
+
+<script>
+// ===== CLOCK =====
+function updateClock(){
+  const now=new Date();
+  const utc=now.toUTCString().split(' ')[4];
+  document.getElementById('headerClock').textContent=utc+' UTC';
+  const bigClock=document.getElementById('bigClock');
+  if(bigClock)bigClock.textContent=utc;
+  updateSessions(now);
+  updateKillZone(now);
+}
+setInterval(updateClock,1000);
+updateClock();
+
+function updateSessions(now){
+  const h=now.getUTCHours();
+  const sessions=[
+    {name:'SYDNEY',start:21,end:6,pair:'AUD/NZD'},
+    {name:'TOKYO',start:0,end:9,pair:'JPY pairs'},
+    {name:'LONDON',start:7,end:17,pair:'EUR/GBP/XAU'},
+    {name:'NEW YORK',start:13,end:22,pair:'All majors'}
+  ];
+  const el=document.getElementById('sessionCards');
+  if(!el)return;
+  el.innerHTML=sessions.map(s=>{
+    let active=s.start<s.end?(h>=s.start&&h<s.end):(h>=s.start||h<s.end);
+    return`<div class="sess-card${active?' active-sess':''}">
+      <div class="sess-name">${s.name}</div>
+      <div class="sess-time">${String(s.start).padStart(2,'0')}:00–${String(s.end).padStart(2,'0')}:00</div>
+      <div class="sess-status" style="color:${active?'var(--green)':'var(--text3)'}">${active?'● ACTIVE':'○ CLOSED'}</div>
+      <div style="font-size:10px;color:var(--text3);margin-top:3px;">${s.pair}</div>
+    </div>`;
+  }).join('');
+}
+
+function updateKillZone(now){
+  const el=document.getElementById('activeKZ');
+  if(!el)return;
+  const h=now.getUTCHours();
+  const zones=[
+    {name:'Asia Kill Zone',s:0,e:4,color:'var(--blue)'},
+    {name:'London Kill Zone',s:7,e:9,color:'var(--gold)'},
+    {name:'NY AM Kill Zone',s:12,e:15,color:'var(--green)'},
+    {name:'NY PM Kill Zone',s:17,e:20,color:'var(--amber)'},
+  ];
+  const active=zones.find(z=>h>=z.s&&h<z.e);
+  el.innerHTML=active?`<span style="color:${active.color}">● ${active.name} ACTIVE</span>`:'<span style="color:var(--text3)">No kill zone active</span>';
+}
+
+// ===== NAV =====
+function switchPanel(id){
+  document.querySelectorAll('.panel-section').forEach(el=>el.classList.remove('active'));
+  document.querySelectorAll('.nav-tab').forEach(el=>el.classList.remove('active'));
+  document.getElementById('panel-'+id).classList.add('active');
+  event.target.classList.add('active');
+  if(id==='calc')runCalc();
+  if(id==='multi')buildMTF();
+}
+
+// ===== CHART UPLOAD =====
+let chartB64=null;
+function handleChart(e){
+  const f=e.target.files[0];if(!f)return;
+  const r=new FileReader();
+  r.onload=ev=>{
+    chartB64=ev.target.result.split(',')[1];
+    const p=document.getElementById('chartPreview');
+    p.src=ev.target.result;p.style.display='block';
+    document.getElementById('uploadLabel').textContent=f.name;
+    document.getElementById('oracleBtn').disabled=false;
+  };
+  r.readAsDataURL(f);
+}
+
+// ===== ORACLE ANALYSIS =====
+const loadingMsgs=[
+  'SCANNING PRICE STRUCTURE...',
+  'DETECTING ORDER BLOCKS...',
+  'IDENTIFYING LIQUIDITY ZONES...',
+  'ANALYZING MARKET STRUCTURE...',
+  'CALCULATING FIBONACCI LEVELS...',
+  'RUNNING SMC FRAMEWORK...',
+  'COMPUTING RISK PARAMETERS...',
+  'GENERATING SIGNAL...'
+];
+let msgIdx=0,msgTimer=null;
+
+async function runOracleAnalysis(){
+  const btn=document.getElementById('oracleBtn');
+  btn.disabled=true;
+  document.getElementById('oraclePlaceholder').style.display='none';
+  document.getElementById('oracleOutput').style.display='none';
+  document.getElementById('oracleLoading').style.display='block';
+  msgIdx=0;
+  msgTimer=setInterval(()=>{
+    msgIdx=(msgIdx+1)%loadingMsgs.length;
+    document.getElementById('loadingMsg').textContent=loadingMsgs[msgIdx];
+  },900);
+
+  const pair=document.getElementById('o-pair').value;
+  const tf=document.getElementById('o-tf').value;
+  const bal=parseFloat(document.getElementById('o-bal').value)||1000;
+  const risk=parseFloat(document.getElementById('o-risk').value)||1;
+  const strat=document.getElementById('o-strat').value;
+  const depth=document.getElementById('o-depth').value;
+  const riskAmt=bal*risk/100;
+
+  const prompt=`You are APEX ORACLE, an elite institutional forex and commodities trading AI with 20+ years of market knowledge. You specialize in Smart Money Concepts (SMC), ICT methodology, and multi-timeframe confluence analysis.
+
+You are analyzing a ${tf} chart of ${pair} using the ${strat} framework. Analysis depth: ${depth}.
+
+Analyze the chart image carefully. Think like a professional institutional trader. Respond ONLY with a valid JSON object. No markdown, no backticks, no preamble, no explanation outside the JSON.
+
+Return EXACTLY this JSON structure:
+{
+  "signal": "BUY" or "SELL" or "WAIT",
+  "confidence": number 0-100,
+  "entry": number,
+  "stopLoss": number,
+  "takeProfit1": number,
+  "takeProfit2": number,
+  "takeProfit3": number,
+  "bestEntryTime": "specific session and time description",
+  "trend": "Bullish" or "Bearish" or "Ranging",
+  "structure": "description of market structure (BOS/CHOCH/etc)",
+  "keyLevel": "specific price level and why it matters",
+  "pattern": "specific pattern or formation seen",
+  "orderBlock": "description of order block if present or N/A",
+  "fvg": "Fair Value Gap description or N/A",
+  "liquidity": "where liquidity sits above/below",
+  "fibLevel": "key fibonacci level in play or N/A",
+  "sessionBias": "which session this setup targets",
+  "smcReasoning": "2-3 sentence SMC-based explanation",
+  "riskWarning": "specific risk factors that could invalidate this setup",
+  "invalidation": "specific price level that invalidates the setup"
+}`;
+
+  try{
+    const messages=chartB64?[{role:'user',content:[
+      {type:'image',source:{type:'base64',media_type:'image/jpeg',data:chartB64}},
+      {type:'text',text:prompt}
+    ]}]:[{role:'user',content:prompt+`\n\nNo chart provided. Generate a realistic, detailed ${pair} ${tf} example analysis as a demonstration of capabilities.`}];
+
+    const resp=await fetch('https://api.anthropic.com/v1/messages',{
+      method:'POST',
+      headers:{
+        'Content-Type':'application/json',
+        'x-api-key':'',
+        'anthropic-version':'2023-06-01',
+        'anthropic-dangerous-direct-browser-access':'true'
+      },
+      body:JSON.stringify({model:'claude-sonnet-4-5-20251001',max_tokens:1200,messages})
+    });
+    const data=await resp.json();
+    const raw=data.content.map(b=>b.text||'').join('').replace(/```json|```/g,'').trim();
+    let r;
+    try{r=JSON.parse(raw);}catch(e){const m=raw.match(/\{[\s\S]*\}/);r=m?JSON.parse(m[0]):null;}
+
+    clearInterval(msgTimer);
+    document.getElementById('oracleLoading').style.display='none';
+    document.getElementById('oracleOutput').style.display='block';
+
+    if(!r){
+      document.getElementById('narrativeEl').innerHTML=`<div class="card"><div class="analysis-text">${raw}</div></div>`;
+      return;
+    }
+
+    const slPips=Math.abs(r.entry-r.stopLoss);
+    const tp1Pips=Math.abs(r.takeProfit1-r.entry);
+    const tp2Pips=Math.abs(r.takeProfit2-r.entry);
+    const rr1=slPips>0?(tp1Pips/slPips).toFixed(2):'—';
+    const rr2=slPips>0?(tp2Pips/slPips).toFixed(2):'—';
+    const lots=slPips>0?(riskAmt/(slPips*10)).toFixed(2):'0.01';
+    const profit1=(parseFloat(lots)*tp1Pips*10).toFixed(2);
+    const profit2=(parseFloat(lots)*tp2Pips*10).toFixed(2);
+    const sig=r.signal;
+    const vc=sig==='BUY'?'buy':sig==='SELL'?'sell':'wait';
+    const vi=sig==='BUY'?'↑':sig==='SELL'?'↓':'—';
+    const conf=r.confidence||0;
+
+    document.getElementById('verdictEl').innerHTML=`
+      <div class="verdict-box ${vc} fade-up">
+        <div class="verdict-top">
+          <div class="verdict-icon">${vi}</div>
+          <div>
+            <div class="verdict-title">${sig==='BUY'?'BUY SIGNAL':sig==='SELL'?'SELL SIGNAL':'WAIT — NO SETUP'}</div>
+            <div class="verdict-sub">${pair} · ${tf} · ${r.sessionBias||r.bestEntryTime}</div>
+          </div>
+          <div style="margin-left:auto;text-align:right;">
+            <div style="font-family:'Orbitron',sans-serif;font-size:28px;font-weight:900;">${conf}%</div>
+            <div style="font-size:10px;letter-spacing:2px;opacity:0.7;">CONFIDENCE</div>
+          </div>
+        </div>
+        <div class="score-wrap">
+          <div class="score-label"><span>ORACLE CONFIDENCE</span><span>${conf}/100</span></div>
+          <div class="score-track"><div class="score-fill" style="width:${conf}%;background:${conf>=70?'var(--green)':conf>=50?'var(--amber)':'var(--red)'};"></div></div>
+        </div>
+        <div class="verdict-body">${r.smcReasoning}</div>
+      </div>`;
+
+    document.getElementById('metricsEl').innerHTML=`
+      <div class="g4 fade-up" style="margin-bottom:16px;">
+        <div class="mcard"><div class="mcard-label">ENTRY</div><div class="mcard-val gold">${r.entry}</div><div class="mcard-sub">${r.structure}</div></div>
+        <div class="mcard"><div class="mcard-label">STOP LOSS</div><div class="mcard-val red">${r.stopLoss}</div><div class="mcard-sub">${slPips.toFixed(1)} pips</div></div>
+        <div class="mcard"><div class="mcard-label">TAKE PROFIT 1</div><div class="mcard-val green">${r.takeProfit1}</div><div class="mcard-sub">R:R 1:${rr1}</div></div>
+        <div class="mcard"><div class="mcard-label">TAKE PROFIT 2</div><div class="mcard-val green">${r.takeProfit2}</div><div class="mcard-sub">R:R 1:${rr2}</div></div>
+        <div class="mcard"><div class="mcard-label">LOT SIZE</div><div class="mcard-val">${lots}</div><div class="mcard-sub">${risk}% risk</div></div>
+        <div class="mcard"><div class="mcard-label">RISK ($)</div><div class="mcard-val red">-$${riskAmt.toFixed(2)}</div><div class="mcard-sub">Max loss</div></div>
+        <div class="mcard"><div class="mcard-label">PROFIT TP1</div><div class="mcard-val green">+$${profit1}</div><div class="mcard-sub">If TP1 hit</div></div>
+        <div class="mcard"><div class="mcard-label">PROFIT TP2</div><div class="mcard-val green">+$${profit2}</div><div class="mcard-sub">If TP2 hit</div></div>
+      </div>`;
+
+    const indicators=[
+      {name:'TREND STRENGTH',val:r.trend==='Bullish'?75:r.trend==='Bearish'?25:50,color:r.trend==='Bullish'?'var(--green)':r.trend==='Bearish'?'var(--red)':'var(--amber)'},
+      {name:'SETUP QUALITY',val:conf,color:conf>=70?'var(--green)':conf>=50?'var(--amber)':'var(--red)'},
+      {name:'SMC ALIGNMENT',val:Math.min(95,(conf+10)),color:'var(--blue)'},
+      {name:'RISK/REWARD',val:Math.min(100,parseFloat(rr1)*25),color:'var(--gold)'},
+    ];
+    document.getElementById('indicatorsEl').innerHTML=`
+      <div class="card fade-up">
+        <div class="card-title">SIGNAL INDICATORS</div>
+        ${indicators.map(i=>`<div class="ind-row">
+          <div class="ind-top"><span class="ind-name">${i.name}</span><span style="font-size:11px;color:var(--text2);">${Math.round(i.val)}%</span></div>
+          <div class="ind-track"><div class="ind-fill" style="width:${Math.round(i.val)}%;background:${i.color};"></div></div>
+        </div>`).join('')}
+      </div>`;
+
+    document.getElementById('breakdownEl').innerHTML=`
+      <div class="card fade-up">
+        <div class="card-title">FULL SMC BREAKDOWN</div>
+        <div class="trow"><span class="trow-label">Market trend</span><span class="badge ${r.trend==='Bullish'?'badge-green':r.trend==='Bearish'?'badge-red':'badge-amber'}">${r.trend}</span></div>
+        <div class="trow"><span class="trow-label">Pattern detected</span><span class="badge badge-gold">${r.pattern}</span></div>
+        <div class="trow"><span class="trow-label">Market structure</span><span style="font-size:12px;color:var(--text2);">${r.structure}</span></div>
+        <div class="trow"><span class="trow-label">Key level</span><span style="font-size:12px;color:var(--text2);max-width:60%;text-align:right;">${r.keyLevel}</span></div>
+        <div class="trow"><span class="trow-label">Order block</span><span style="font-size:12px;color:var(--text2);max-width:60%;text-align:right;">${r.orderBlock}</span></div>
+        <div class="trow"><span class="trow-label">Fair Value Gap</span><span style="font-size:12px;color:var(--text2);max-width:60%;text-align:right;">${r.fvg}</span></div>
+        <div class="trow"><span class="trow-label">Liquidity</span><span style="font-size:12px;color:var(--text2);max-width:60%;text-align:right;">${r.liquidity}</span></div>
+        <div class="trow"><span class="trow-label">Fibonacci</span><span style="font-size:12px;color:var(--text2);">${r.fibLevel}</span></div>
+        <div class="trow"><span class="trow-label">Best entry time</span><span style="font-size:12px;color:var(--gold);">${r.bestEntryTime}</span></div>
+        <div class="trow"><span class="trow-label">Invalidation level</span><span style="font-size:12px;color:var(--red);">${r.invalidation}</span></div>
+        <div style="margin-top:12px;padding:10px;background:rgba(255,69,96,0.06);border:1px solid rgba(255,69,96,0.15);border-radius:var(--r);">
+          <div style="font-size:10px;letter-spacing:2px;color:var(--red);margin-bottom:4px;font-family:'Share Tech Mono',monospace;">RISK WARNING</div>
+          <div style="font-size:13px;color:var(--text2);">${r.riskWarning}</div>
+        </div>
+      </div>`;
+
+  }catch(err){
+    clearInterval(msgTimer);
+    document.getElementById('oracleLoading').style.display='none';
+    document.getElementById('narrativeEl').innerHTML=`<div class="card"><div style="color:var(--red);font-size:13px;">Error: ${err.message}</div></div>`;
+    document.getElementById('oracleOutput').style.display='block';
+  }
+  btn.disabled=false;
+}
+
+// ===== CONFLUENCE SCANNER =====
+function runScanner(){
+  const htf=document.getElementById('sc-htf').value;
+  const dir=document.getElementById('sc-dir').value;
+  const sess=document.getElementById('sc-sess').value;
+  const news=document.getElementById('sc-news').value;
+  const ms=document.getElementById('sc-ms').value;
+  const cIds=['cf1','cf2','cf3','cf4','cf5','cf6','cf7','cf8','cf9','cf10','cf11','cf12'];
+  const cNames=['Key S/R','Order Block','FVG','Fibonacci 61.8%','Liquidity sweep','EMA stack','LTF BOS','Clean structure','Rejection wick','Kill zone','Premium/discount','Volume node'];
+  const present=cIds.map(id=>document.getElementById(id).checked);
+  const cnt=present.filter(Boolean).length;
+
+  let score=0,rows=[];
+
+  const bull=htf.includes('Bullish');
+  const bear=htf.includes('Bearish');
+  const aligned=(bull&&dir.includes('Buy'))||(bear&&dir.includes('Sell'));
+  const strong=htf.includes('Strong');
+  const htfPts=aligned?(strong?28:22):(htf.includes('Ranging')?5:0);
+  score+=htfPts;
+  rows.push({l:'HTF trend alignment',s:htfPts>=22?'badge-green':htfPts>=5?'badge-amber':'badge-red',b:htfPts>=22?'ALIGNED +'+htfPts:htfPts>=5?'RANGING +'+htfPts:'COUNTER-TREND +0'});
+
+  const sp=sess.includes('Overlap')?20:sess.includes('London')||sess.includes('NY')?18:sess.includes('Asian')?8:0;
+  score+=sp;
+  rows.push({l:'Session quality',s:sp>=18?'badge-green':sp>=8?'badge-amber':'badge-red',b:sp>=18?'PRIME +'+sp:sp>=8?'MOD +'+sp:'DEAD +0'});
+
+  const msPts=ms.includes('BOS')?15:ms.includes('CHOCH')?12:ms.includes('sweep')?10:0;
+  score+=msPts;
+  rows.push({l:'Market structure',s:msPts>=12?'badge-green':msPts>=8?'badge-amber':'badge-red',b:ms.split(' ')[0]+' +'+msPts});
+
+  const cScore=cnt*4;score+=cScore;
+  rows.push({l:`Confluences (${cnt}/12)`,s:cnt>=6?'badge-green':cnt>=3?'badge-amber':'badge-red',b:`${cnt} HITS +${cScore}`});
+
+  const nPts=news.includes('No')?5:news.includes('Low')?2:news.includes('Medium')?-10:news.includes('High')?-20:-30;
+  score=Math.max(0,Math.min(100,score+nPts));
+  rows.push({l:'News risk',s:nPts>=2?'badge-green':nPts>=-10?'badge-amber':'badge-red',b:news.split(' ')[0]+' '+(nPts>=0?'+':'')+nPts});
+
+  const go=score>=72&&aligned&&cnt>=4&&!news.includes('High')&&!news.includes('Central');
+  const wait=score>=48;
+  const vc=go?'buy':wait?'wait':'sell';
+  const label=go?'HIGH-PROBABILITY SETUP':wait?'WAIT — INCOMPLETE':'SKIP THIS TRADE';
+
+  const presentNames=cNames.filter((_,i)=>present[i]);
+  const missingNames=cNames.filter((_,i)=>!present[i]).slice(0,4);
+
+  document.getElementById('scanOutput').innerHTML=`
+    <div class="verdict-box ${vc} fade-up">
+      <div class="verdict-title">${label}</div>
+      <div class="verdict-sub" style="margin-top:6px;">Score: ${score}/100 · ${cnt}/12 confluences · ${sess.split(' ')[0]} session</div>
+      <div class="score-wrap" style="margin-top:12px;">
+        <div class="score-track" style="height:6px;"><div class="score-fill" style="width:${score}%;background:${go?'var(--green)':wait?'var(--amber)':'var(--red)'};"></div></div>
+      </div>
+    </div>
+    <div class="card fade-up">
+      <div class="card-title">CONFLUENCE BREAKDOWN</div>
+      ${rows.map(r=>`<div class="trow"><span class="trow-label">${r.l}</span><span class="badge ${r.s}">${r.b}</span></div>`).join('')}
+    </div>
+    ${presentNames.length?`<div class="card fade-up">
+      <div class="card-title">ACTIVE CONFLUENCES</div>
+      <div style="display:flex;flex-wrap:wrap;gap:6px;">
+        ${presentNames.map(n=>`<span class="badge badge-green">${n}</span>`).join('')}
+      </div>
+      ${missingNames.length?`<div style="margin-top:10px;"><div style="font-size:10px;letter-spacing:2px;color:var(--text3);margin-bottom:6px;font-family:'Share Tech Mono',monospace;">MISSING</div><div style="display:flex;flex-wrap:wrap;gap:6px;">${missingNames.map(n=>`<span class="badge badge-red">${n}</span>`).join('')}</div></div>`:''}
+    </div>`:''}`;
+}
+
+// ===== MULTI-TIMEFRAME =====
+const mtfFrames=['M15','M30','H1','H4','D1','W1'];
+function buildMTF(){
+  const tbody=document.getElementById('mtfBody');
+  tbody.innerHTML=mtfFrames.map(tf=>`<tr>
+    <td style="font-family:'Share Tech Mono',monospace;font-size:12px;color:var(--gold);">${tf}</td>
+    <td><select style="padding:5px;font-size:12px;background:var(--bg3);border:1px solid var(--border);color:var(--text);border-radius:4px;">
+      <option>Bullish</option><option>Bearish</option><option>Ranging</option>
+    </select></td>
+    <td><select style="padding:5px;font-size:12px;background:var(--bg3);border:1px solid var(--border);color:var(--text);border-radius:4px;">
+      <option>BOS</option><option>CHOCH</option><option>Sweep</option><option>Ranging</option>
+    </select></td>
+    <td><input type="number" placeholder="e.g. 2320" step="0.01" style="padding:5px;font-size:12px;background:var(--bg3);border:1px solid var(--border);color:var(--text);border-radius:4px;width:100px;"></td>
+    <td id="mtf-sig-${tf}"><span class="badge badge-gold">—</span></td>
+  </tr>`).join('');
+}
+buildMTF();
+
+function runMTF(){
+  const rows=document.querySelectorAll('#mtfBody tr');
+  const bias=document.getElementById('mtf-bias').value;
+  const isBull=bias.includes('Bull');
+  let bullCount=0,bearCount=0;
+  rows.forEach((row,i)=>{
+    const selects=row.querySelectorAll('select');
+    const trend=selects[0].value;
+    const str=selects[1].value;
+    const aligned=(isBull&&trend==='Bullish')||(!isBull&&trend==='Bearish');
+    const sigEl=row.querySelector(`td:last-child`);
+    const q=aligned?(str==='BOS'?'STRONG':'MODERATE'):'WEAK';
+    sigEl.innerHTML=`<span class="badge ${q==='STRONG'?'badge-green':q==='MODERATE'?'badge-amber':'badge-red'}">${q}</span>`;
+    if(trend==='Bullish')bullCount++;
+    if(trend==='Bearish')bearCount++;
+  });
+  const alignment=Math.max(bullCount,bearCount);
+  const pct=Math.round((alignment/mtfFrames.length)*100);
+  const go=pct>=66;
+  document.getElementById('mtfOutput').innerHTML=`
+    <div class="card fade-up">
+      <div class="card-title">ALIGNMENT RESULT</div>
+      <div class="g3">
+        <div class="mcard"><div class="mcard-label">ALIGNMENT</div><div class="mcard-val ${go?'green':'red'}">${pct}%</div></div>
+        <div class="mcard"><div class="mcard-label">BULL TFs</div><div class="mcard-val green">${bullCount}</div></div>
+        <div class="mcard"><div class="mcard-label">BEAR TFs</div><div class="mcard-val red">${bearCount}</div></div>
+      </div>
+      <div class="score-wrap"><div class="score-track" style="height:6px;"><div class="score-fill" style="width:${pct}%;background:${go?'var(--green)':'var(--red)'};"></div></div></div>
+      <div style="margin-top:12px;font-size:13px;color:var(--text2);">${go?`Strong ${isBull?'bullish':'bearish'} alignment across ${pct}% of timeframes. This is a ${pct>=83?'institutional-grade':'high-probability'} setup direction.`:`Weak alignment. Only ${pct}% of timeframes agree. Avoid trading until alignment improves to 66%+.`}</div>
+    </div>`;
+}
+
+// ===== CALCULATOR =====
+function runCalc(){
+  const bal=parseFloat(document.getElementById('pc-bal').value)||1000;
+  const rsk=parseFloat(document.getElementById('pc-rsk').value)||1;
+  const ent=parseFloat(document.getElementById('pc-ent').value)||0;
+  const sl=parseFloat(document.getElementById('pc-sl').value)||0;
+  const tp1=parseFloat(document.getElementById('pc-tp1').value)||0;
+  const tp2=parseFloat(document.getElementById('pc-tp2').value)||0;
+  const instVal=document.getElementById('pc-inst').value.split(',');
+  const pipVal=parseFloat(instVal[0])||10;
+  const partial=document.getElementById('pc-partial').value;
+
+  const rAmt=bal*rsk/100;
+  const slP=Math.abs(ent-sl);
+  const tp1P=Math.abs(tp1-ent);
+  const tp2P=Math.abs(tp2-ent);
+  const lots=slP>0?(rAmt/(slP*pipVal)).toFixed(2):'—';
+  const p1=(parseFloat(lots)*tp1P*pipVal).toFixed(2);
+  const p2=(parseFloat(lots)*tp2P*pipVal).toFixed(2);
+  const rr1=slP>0?(tp1P/slP).toFixed(2):'—';
+  const rr2=slP>0?(tp2P/slP).toFixed(2):'—';
+  const be=rr1!=='—'?(100/(1+parseFloat(rr1))).toFixed(1):'—';
+
+  let partialP1=p1,partialP2='0';
+  if(partial.includes('50%')&&p1!=='NaN'){partialP1=(p1*0.5).toFixed(2);partialP2=(parseFloat(lots)*0.5*tp2P*pipVal).toFixed(2);}
+  else if(partial.includes('33%')&&p1!=='NaN'){partialP1=(p1*0.33).toFixed(2);partialP2=(parseFloat(lots)*0.67*tp2P*pipVal).toFixed(2);}
+  else if(partial.includes('25%')&&p1!=='NaN'){partialP1=(p1*0.25).toFixed(2);partialP2=(parseFloat(lots)*0.75*tp2P*pipVal).toFixed(2);}
+
+  const isBuy=tp1>ent;
+  document.getElementById('calcOutput').innerHTML=`
+    <div class="g4" style="margin-bottom:16px;">
+      <div class="mcard"><div class="mcard-label">RISK ($)</div><div class="mcard-val red">-$${rAmt.toFixed(2)}</div></div>
+      <div class="mcard"><div class="mcard-label">LOT SIZE</div><div class="mcard-val gold">${lots}</div></div>
+      <div class="mcard"><div class="mcard-label">TP1 PROFIT</div><div class="mcard-val green">+$${p1}</div></div>
+      <div class="mcard"><div class="mcard-label">TP2 PROFIT</div><div class="mcard-val green">+$${p2}</div></div>
+    </div>
+    <div class="card">
+      <div class="card-title">TRADE DETAILS</div>
+      <div class="trow"><span class="trow-label">Direction</span><span class="badge ${isBuy?'badge-green':'badge-red'}">${isBuy?'BUY':'SELL'}</span></div>
+      <div class="trow"><span class="trow-label">SL distance</span><span style="font-size:13px;color:var(--text2);">${slP.toFixed(2)} pips</span></div>
+      <div class="trow"><span class="trow-label">TP1 distance</span><span style="font-size:13px;color:var(--text2);">${tp1P.toFixed(2)} pips</span></div>
+      <div class="trow"><span class="trow-label">TP2 distance</span><span style="font-size:13px;color:var(--text2);">${tp2P.toFixed(2)} pips</span></div>
+      <div class="trow"><span class="trow-label">R:R to TP1</span><span class="badge badge-gold">1:${rr1}</span></div>
+      <div class="trow"><span class="trow-label">R:R to TP2</span><span class="badge badge-gold">1:${rr2}</span></div>
+      <div class="trow"><span class="trow-label">Break-even win rate</span><span style="font-size:13px;color:var(--text2);">${be}%</span></div>
+      <div class="trow"><span class="trow-label">Partial close TP1</span><span style="font-size:13px;color:var(--green);">+$${partialP1}</span></div>
+      <div class="trow"><span class="trow-label">Remaining TP2</span><span style="font-size:13px;color:var(--green);">+$${partialP2}</span></div>
+      <div style="margin-top:12px;padding:10px;background:rgba(0,229,160,0.05);border:1px solid rgba(0,229,160,0.15);border-radius:var(--r);">
+        <div style="font-size:11px;letter-spacing:2px;color:var(--green);margin-bottom:4px;font-family:'Share Tech Mono',monospace;">PARTIAL EXIT STRATEGY</div>
+        <div style="font-size:13px;color:var(--text2);">${partial}</div>
+      </div>
+    </div>`;
+}
+
+// ===== JOURNAL =====
+let trades=[];
+function addTrade(){
+  const pair=document.getElementById('jn-pair').value;
+  const dir=document.getElementById('jn-dir').value;
+  const entry=parseFloat(document.getElementById('jn-entry').value);
+  const exit=parseFloat(document.getElementById('jn-exit').value);
+  const sl=parseFloat(document.getElementById('jn-sl').value);
+  const lots=parseFloat(document.getElementById('jn-lots').value);
+  const pnl=parseFloat(document.getElementById('jn-pnl').value);
+  const strat=document.getElementById('jn-strat').value;
+  const notes=document.getElementById('jn-notes').value;
+  if(!pair||isNaN(pnl))return;
+  const slPips=Math.abs(entry-sl);
+  const tpPips=Math.abs(exit-entry);
+  const rr=slPips>0?(tpPips/slPips).toFixed(2):'—';
+  trades.unshift({pair,dir,entry,exit,sl,lots,pnl,strat,notes,rr,date:new Date().toLocaleDateString()});
+  renderJournal();
+}
+function renderJournal(){
+  if(!trades.length)return;
+  const totalPnl=trades.reduce((s,t)=>s+t.pnl,0);
+  const wins=trades.filter(t=>t.pnl>0).length;
+  const wr=Math.round(wins/trades.length*100);
+  const avgW=wins?(trades.filter(t=>t.pnl>0).reduce((s,t)=>s+t.pnl,0)/wins).toFixed(0):0;
+  const losses=trades.filter(t=>t.pnl<0).length;
+  const avgL=losses?(Math.abs(trades.filter(t=>t.pnl<0).reduce((s,t)=>s+t.pnl,0)/losses)).toFixed(0):0;
+  const streak=calcStreak();
+
+  document.getElementById('jnStats').innerHTML=`
+    <div class="mcard"><div class="mcard-label">TOTAL P&L</div><div class="mcard-val ${totalPnl>=0?'green':'red'}">${totalPnl>=0?'+':''}$${totalPnl.toFixed(2)}</div></div>
+    <div class="mcard"><div class="mcard-label">WIN RATE</div><div class="mcard-val ${wr>=55?'green':wr>=45?'gold':'red'}">${wr}%</div></div>
+    <div class="mcard"><div class="mcard-label">AVG WIN</div><div class="mcard-val green">+$${avgW}</div></div>
+    <div class="mcard"><div class="mcard-label">STREAK</div><div class="mcard-val ${streak>0?'green':'red'}">${streak>0?'+':''}${streak}</div></div>`;
+
+  document.getElementById('jnLog').innerHTML=trades.map(t=>`
+    <div class="trade-item">
+      <div class="trade-dot ${t.dir.toLowerCase()}"></div>
+      <div>
+        <div style="font-weight:600;font-size:13px;">${t.pair} ${t.dir.toUpperCase()} <span style="font-size:11px;color:var(--text3);">· ${t.strat}</span></div>
+        <div style="font-size:11px;color:var(--text3);margin-top:2px;">${t.date} · ${t.entry} → ${t.exit} · ${t.lots} lots · R:R 1:${t.rr}</div>
+        ${t.notes?`<div style="font-size:11px;color:var(--text3);margin-top:2px;font-style:italic;">${t.notes}</div>`:''}
+      </div>
+      <div><span class="badge ${t.pnl>=0?'badge-green':'badge-red'}">${t.pnl>=0?'+':''}$${t.pnl.toFixed(2)}</span></div>
+    </div>`).join('');
+}
+function calcStreak(){
+  if(!trades.length)return 0;
+  let s=trades[0].pnl>=0?1:-1;
+  for(let i=1;i<trades.length;i++){
+    const w=trades[i].pnl>=0;
+    if((w&&s>0)||(!w&&s<0)){s+=s>0?1:-1;}else break;
+  }
+  return s;
+}
+
+// INIT
+runCalc();
+</script>
+</body>
+</html>
